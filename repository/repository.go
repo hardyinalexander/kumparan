@@ -3,7 +3,7 @@ package repository
 import "github.com/jinzhu/gorm"
 
 type Repository interface {
-	CreateNews(news News) error
+	CreateNews(news *News) error
 }
 
 type repository struct {
@@ -14,7 +14,7 @@ func InitRepository(db *gorm.DB) Repository {
 	return &repository{db}
 }
 
-func (r *repository) CreateNews(news News) error {
+func (r *repository) CreateNews(news *News) error {
 	err := r.db.Create(&news).Error
 	return err
 }

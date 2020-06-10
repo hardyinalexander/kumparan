@@ -27,6 +27,6 @@ func (c *consumerService) CreateNews(data []byte) error {
 	}
 
 	n.Created = time.Now()
-	err = c.repo.CreateNews(n)
+	err = c.repo.CreateNews(&n)
 	return err
 }

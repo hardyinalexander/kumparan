@@ -9,6 +9,7 @@ type Config struct {
 	DBUser     string `envconfig:"DB_USER"`
 	DBPassword string `envconfig:"DB_HOST"`
 	DBName     string `envconfig:"DB_NAME"`
+	MQURL      string `envconfig:"MQ_URL"`
 }
 
 // Get Configuration function

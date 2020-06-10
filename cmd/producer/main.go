@@ -15,7 +15,7 @@ import (
 func main() {
 	cfg := config.Get()
 
-	mqConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	mqConn, err := amqp.Dial(cfg.MQURL)
 	handleError(err, "Failed to connect to RabbitMQ")
 	defer mqConn.Close()
 
