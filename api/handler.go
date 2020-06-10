@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"kumparan/service"
@@ -12,30 +13,20 @@ type Handler interface {
 }
 
 type handler struct {
-	consumer service.Consumer
+	producer service.ProducerService
 }
 
-func InitHandler(consumer service.Consumer) Handler {
-	return &handler{consumer}
+func InitHandler(producer service.ProducerService) Handler {
+	return &handler{producer}
 }
 
 func (h *handler) CreateNews(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	err := r.ParseForm()
-	if err != nil {
-		response := FailedResponse{
-			Status:  http.StatusForbidden,
-			Message: err.Error(),
-		}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
+	data, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 
-	author := r.FormValue("author")
-	body := r.FormValue("body")
-
-	news, err := h.consumer.CreateNews(author, body)
+	err = h.producer.CreateNews(data)
 	if err != nil {
 		response := FailedResponse{
 			Status:  http.StatusForbidden,
@@ -47,8 +38,7 @@ func (h *handler) CreateNews(w http.ResponseWriter, r *http.Request) {
 
 	response := SuccessResponse{
 		Status:  http.StatusOK,
-		Message: "You have created a news",
-		Data:    news,
+		Message: "Successfully sent a message!",
 	}
 	json.NewEncoder(w).Encode(response)
 }

@@ -1,31 +1,32 @@
 package service
 
 import (
+	"encoding/json"
 	"kumparan/repository"
 	"time"
 )
 
-type Consumer interface {
-	CreateNews(author, body string) (repository.News, error)
+type ConsumerService interface {
+	CreateNews(data []byte) error
 }
 
-type consumer struct {
+type consumerService struct {
 	repo repository.Repository
 	// elactic search
 }
 
-func InitConsumer(repo repository.Repository) Consumer {
-	return &consumer{repo}
+func InitConsumerService(repo repository.Repository) ConsumerService {
+	return &consumerService{repo}
 }
 
-func (c *consumer) CreateNews(author, body string) (repository.News, error) {
-	n := repository.News{
-		Author:  author,
-		Body:    body,
-		Created: time.Now(),
+func (c *consumerService) CreateNews(data []byte) error {
+	var n repository.News
+	err := json.Unmarshal(data, &n)
+	if err != nil {
+		return err
 	}
 
-	n, err := c.repo.CreateNews(n)
-
-	return n, err
+	n.Created = time.Now()
+	err = c.repo.CreateNews(n)
+	return err
 }

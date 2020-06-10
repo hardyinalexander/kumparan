@@ -7,4 +7,5 @@ require (
 	github.com/jinzhu/gorm v1.9.12
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/common v0.10.0 // indirect
+	github.com/streadway/amqp v1.0.0
 )
