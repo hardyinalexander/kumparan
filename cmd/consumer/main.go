@@ -66,7 +66,7 @@ func main() {
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	log.Printf("Waiting for messages...")
 	<-forever
 
 }
@@ -80,9 +80,7 @@ func initDB(cfg config.Config) *gorm.DB {
 }
 
 func initElasticSearch(cfg config.Config) *elastic.Client {
-	client, err := elastic.NewClient(elastic.SetURL(cfg.ElasticSearchURL),
-		elastic.SetSniff(false),
-		elastic.SetHealthcheck(false))
+	client, err := elastic.NewClient(elastic.SetURL(cfg.ElasticSearchURL))
 
 	handleError(err, "Failed to connect to ElasticSearch")
 	go createIndexIfNotExist(client)

@@ -5,6 +5,10 @@ const (
 	DocType      = "_doc"
 	IndexMapping = `
 	{
+		"settings":{
+			"number_of_shards":1,
+			"number_of_replicas":0
+		},
 		"mappings":{
 		   "properties":{
 			  "id":{
@@ -17,4 +21,5 @@ const (
 		}
 	}
 	`
+	PageSize = 10
 )

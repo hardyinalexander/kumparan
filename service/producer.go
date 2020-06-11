@@ -1,21 +1,26 @@
 package service
 
 import (
+	"kumparan/repository"
 	"log"
+	"sort"
+	"sync"
 
 	"github.com/streadway/amqp"
 )
 
 type ProducerService interface {
 	CreateNews(data []byte) error
+	GetAllNews(page int) ([]*repository.News, error)
 }
 
 type producerService struct {
-	ch *amqp.Channel
+	ch   *amqp.Channel
+	repo repository.Repository
 }
 
-func InitProducerService(ch *amqp.Channel) ProducerService {
-	return &producerService{ch}
+func InitProducerService(ch *amqp.Channel, repo repository.Repository) ProducerService {
+	return &producerService{ch, repo}
 }
 
 func (p *producerService) CreateNews(data []byte) error {
@@ -41,6 +46,30 @@ func (p *producerService) CreateNews(data []byte) error {
 	handleError(err, "Failed to publish a message")
 
 	return err
+}
+
+func (p *producerService) GetAllNews(page int) ([]*repository.News, error) {
+	ids, err := p.repo.GetAllESDocument(page)
+	handleError(err, "Failed to retrieve documents from ElasticSearch")
+
+	result := make([]*repository.News, len(ids))
+
+	var wg sync.WaitGroup
+	wg.Add(len(ids))
+
+	for pos, id := range ids {
+		go func(pos, id int) {
+			defer wg.Done()
+			news, err := p.repo.GetNewsByID(id)
+			handleError(err, "Failed to GetNewsByID")
+
+			result[pos] = news
+		}(pos, id)
+	}
+
+	wg.Wait()
+	sort.Sort(repository.NewsSorter(result))
+	return result, err
 }
 
 func handleError(err error, msg string) {
