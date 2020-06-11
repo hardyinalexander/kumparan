@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"kumparan/config"
+	"kumparan/constants"
 	"kumparan/repository"
 	"kumparan/service"
 	"log"
@@ -10,6 +13,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/streadway/amqp"
+	elastic "gopkg.in/olivere/elastic.v6"
 )
 
 func main() {
@@ -18,7 +22,9 @@ func main() {
 	db := initDB(cfg)
 	defer db.Close()
 
-	repo := repository.InitRepository(db)
+	e := initElasticSearch(cfg)
+
+	repo := repository.InitRepository(db, e)
 	consumerSvc := service.InitConsumerService(repo)
 
 	conn, err := amqp.Dial(cfg.MQURL)
@@ -71,6 +77,35 @@ func initDB(cfg config.Config) *gorm.DB {
 	handleError(err, "Failed to connect to Postgres")
 
 	return db
+}
+
+func initElasticSearch(cfg config.Config) *elastic.Client {
+	client, err := elastic.NewClient(elastic.SetURL(cfg.ElasticSearchURL),
+		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false))
+
+	handleError(err, "Failed to connect to ElasticSearch")
+	go createIndexIfNotExist(client)
+	return client
+}
+
+func createIndexIfNotExist(client *elastic.Client) {
+	ctx := context.Background()
+
+	exists, err := client.IndexExists(constants.IndexName).Do(ctx)
+	handleError(err, "Failed checking if index exists")
+
+	if exists {
+		return
+	}
+
+	res, err := client.CreateIndex(constants.IndexName).Body(constants.IndexMapping).Do(ctx)
+	handleError(err, "Failed creating index")
+
+	if !res.Acknowledged {
+		err = errors.New("CreateIndex was not acknowledged. Check that timeout value is correct.")
+		handleError(err, err.Error())
+	}
 }
 
 func handleError(err error, msg string) {

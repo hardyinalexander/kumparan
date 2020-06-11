@@ -12,7 +12,6 @@ type ConsumerService interface {
 
 type consumerService struct {
 	repo repository.Repository
-	// elactic search
 }
 
 func InitConsumerService(repo repository.Repository) ConsumerService {
@@ -26,7 +25,12 @@ func (c *consumerService) CreateNews(data []byte) error {
 		return err
 	}
 
-	n.Created = time.Now()
+	n.Created = time.Now().Format("2006-01-02T15:04:05")
 	err = c.repo.CreateNews(&n)
+	if err != nil {
+		return err
+	}
+
+	err = c.repo.CreateESDocument(n.ID, n.Created)
 	return err
 }
