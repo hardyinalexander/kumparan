@@ -35,15 +35,16 @@ func main() {
 	repo := repository.InitRepository(db, e)
 
 	producerSvc := service.InitProducerService(ch, repo)
-	router := initRouter(producerSvc)
+	cache := repository.InitCache()
+	router := initRouter(producerSvc, cache)
 
 	log.Printf("Starting server on port %s... \n", cfg.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), router))
 }
 
-func initRouter(producerSvc service.ProducerService) *mux.Router {
+func initRouter(producerSvc service.ProducerService, cache repository.Cache) *mux.Router {
 	router := mux.NewRouter()
-	handler := api.InitHandler(producerSvc)
+	handler := api.InitHandler(producerSvc, cache)
 
 	router.HandleFunc("/news", handler.CreateNews).Methods("POST")
 	router.HandleFunc("/news", handler.GetNews).Queries("page", "{page:[0-9]+}").Methods("GET")
